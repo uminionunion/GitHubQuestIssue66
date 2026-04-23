@@ -142,7 +142,7 @@ body {
 /* ========== CANVAS GRID ========== */
 .canvas-container {
   position: relative;
-  display: inline-block;
+  display: block;  /* Changed from inline-block (which looked GREAT, gave an off-center (to the left) look) but trying out CENTERED LOOK for now; but feel free changing it back wheneves -Salem -9:19pm on 4/22/26  */
   margin: 2rem auto;
   width: 100%;
   max-width: 1000px;
@@ -152,6 +152,7 @@ body {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   overflow: hidden;
 }
+
 
 #pixelCanvas {
   display: block;
