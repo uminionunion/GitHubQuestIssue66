@@ -62,47 +62,72 @@
       </div>
     </div>
 
-    <!-- ===== PIXEL POPUP ===== -->
+        <!-- ===== PIXEL POPUP ===== -->
     <!-- Modal that appears when user clicks a pixel -->
     <div id="pixelModal" class="modal" style="display:none;">
-      <div class="modal-content">
+      <div class="modal-content pixel-modal">
         <span class="close">&times;</span>
 
-        <h2>Pixel Details</h2>
+        <h2>🎨 Pixel Details</h2>
 
         <!-- Pixel info display -->
         <div class="pixel-info">
-          <p><strong>Coordinates:</strong> <span id="modalCoords"></span></p>
-          <p><strong>Current Price:</strong> $<span id="modalPrice"></span></p>
-          <p><strong>Times Purchased:</strong> <span id="modalPurchaseCount"></span> / 10</p>
-          <p><strong>Owner:</strong> <span id="modalOwner"></span></p>
-          <p><strong>Color:</strong> <span id="modalColor"></span></p>
+          <div class="info-row">
+            <span class="info-label">Coordinates:</span>
+            <span class="info-value" id="modalCoords"></span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Current Price:</span>
+            <span class="info-value price">$<span id="modalPrice"></span></span>
+          </div>
+          <div class="info-row" id="purchaseCountRow" style="display:none;">
+            <span class="info-label">Times Purchased:</span>
+            <span class="info-value"><span id="modalPurchaseCount"></span> / 10</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Owner:</span>
+            <span class="info-value" id="modalOwner"></span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Color:</span>
+            <span class="info-value color-swatch">
+              <span id="modalColor"></span>
+              <div id="colorPreview" style="display:none; width: 30px; height: 30px; border-radius: 4px; border: 2px solid #ddd;"></div>
+            </span>
+          </div>
         </div>
 
         <!-- Color picker (shown if user owns pixel) -->
-        <div id="colorChangeSection" style="display:none;">
-          <h3>Change Pixel Color</h3>
-          <p id="colorChangesAvailable"></p>
-          <input type="color" id="colorPicker" value="#000000">
-          <button id="applyColorBtn" class="btn btn-primary">Apply Color</button>
+        <div id="colorChangeSection" style="display:none;" class="action-section">
+          <h3>🎨 Change Pixel Color</h3>
+          <p id="colorChangesAvailable" class="changes-available"></p>
+          <div class="color-picker-container">
+            <input type="color" id="colorPicker" value="#000000">
+            <button id="applyColorBtn" class="btn btn-primary">Apply Color</button>
+          </div>
         </div>
 
         <!-- Purchase button (shown if not at max purchases) -->
-        <button id="purchaseBtn" class="btn btn-success" style="display:none;">
+        <button id="purchaseBtn" class="btn btn-success btn-large" style="display:none;">
           Purchase Pixel - $<span id="purchasePrice"></span>
         </button>
 
-        <!-- Login prompt (shown if not logged in) -->
-        <p id="loginPrompt" class="text-center" style="display:none; color: #ff6b6b;">
-          <strong>Please log in to purchase pixels</strong>
-        </p>
+        <!-- Login/Register prompt (shown if not logged in) -->
+<div id="loginPrompt" class="action-section login-section">
+          <p class="login-text">Please log-in to purchase pixels</p>
+          <div class="modal-auth-buttons">
+            <button class="btn btn-primary" onclick="openLoginModal()">Login</button>
+            <button class="btn btn-secondary" onclick="openRegisterModal()">Register</button>
+          </div>
+        </div>
 
         <!-- Max purchases message -->
-        <p id="maxPurchasesMsg" style="display:none; color: #ff9800;">
-          This pixel has reached the maximum number of purchases (10) and cannot be purchased again.
-        </p>
+        <div id="maxPurchasesMsg" style="display:none;" class="action-section max-purchases">
+          <p>⚠️ This pixel has reached the maximum number of purchases (10) and cannot be purchased again.</p>
+        </div>
       </div>
     </div>
+
 
     <!-- ===== USER DASHBOARD ===== -->
     <!-- Shows all pixels owned by logged-in user -->
@@ -114,10 +139,10 @@
     </div>
   </div>
 
-  <!-- ===== LOADING INDICATOR ===== -->
+    <!-- ===== LOADING INDICATOR ===== -->
   <div id="loadingIndicator" class="loading" style="display:none;">
     <div class="spinner"></div>
-    <p>Loading...</p>
+    <p> Loading the 1mil pixels...</p>
   </div>
 
   <!-- ===== AUTH MODALS ===== -->

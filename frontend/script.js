@@ -469,11 +469,19 @@ async function showPixelModal(x, y) {
     const pixel = data.data;
 
     // ---- POPULATE MODAL ----
-    document.getElementById('modalCoords').textContent = `(${x}, ${y})`;
-    document.getElementById('modalPrice').textContent = (pixel.current_price / 100).toFixed(2);
-    document.getElementById('modalPurchaseCount').textContent = pixel.purchase_count;
-    document.getElementById('modalOwner').textContent = pixel.owner_user_id ? 'Someone' : 'Unclaimed';
-    document.getElementById('modalColor').textContent = pixel.color || 'Not set';
+document.getElementById('modalCoords').textContent = `(${x}, ${y})`;
+document.getElementById('modalPrice').textContent = (pixel.current_price).toFixed(2);  // REMOVED /100
+document.getElementById('modalPurchaseCount').textContent = pixel.purchase_count;
+document.getElementById('modalOwner').textContent = pixel.owner_user_id ? 'Someone' : 'Unclaimed';
+document.getElementById('modalColor').textContent = pixel.color || 'Not set';
+
+// HIDE purchase count if 0, show if >= 1
+const purchaseCountRow = document.getElementById('purchaseCountRow');
+if (pixel.purchase_count >= 1) {
+  purchaseCountRow.style.display = 'block';
+} else {
+  purchaseCountRow.style.display = 'none';
+}
 
     // ---- SHOW/HIDE ACTION BUTTONS ----
 
