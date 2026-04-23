@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<!--
+  ========================================================================
+  MILLION PIXEL GRID - MAIN PAGE
+  
+  This is the main page where users see the 1000x1000 pixel grid.
+  
+  Structure:
+  1. Navigation bar (login/logout buttons)
+  2. Grid canvas (where pixels render)
+  3. Pixel info popup (shows selected pixel details)
+  4. User dashboard (shows owned pixels)
+  5. JavaScript files for functionality
+  ========================================================================
+-->
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Million Pixel Grid - Buy & Color Your Pixels!</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===== NAVIGATION BAR ===== -->
+  <!-- Top bar showing login status and user options -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <!-- Logo/Title -->
+      <h1 class="logo">🎨 Million Pixel Grid</h1>
+
+      <!-- Navigation links on right side -->
+      <div class="nav-right">
+        <!-- User info (shown when logged in) -->
+        <span id="userEmail" class="user-email" style="display:none;"></span>
+
+        <!-- Buttons that change based on login status -->
+        <button id="loginBtn" class="btn btn-primary">Login</button>
+        <button id="registerBtn" class="btn btn-secondary">Register</button>
+        <button id="logoutBtn" class="btn btn-danger" style="display:none;">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== MAIN CONTAINER ===== -->
+  <div class="container">
+    <!-- Instructions -->
+    <div class="instructions">
+      <p>💡 <strong>Click any pixel to purchase it!</strong> Starting price is $2, and doubles with each purchase (up to 10 times max).</p>
+    </div>
+
+    <!-- ===== PIXEL GRID CANVAS ===== -->
+    <!-- This is where the 1000x1000 grid renders
+         Using canvas instead of DOM elements for performance -->
+    <div class="canvas-container">
+      <canvas id="pixelCanvas" width="1000" height="1000"></canvas>
+      
+      <!-- Hover info tooltip -->
+      <div id="hoverInfo" class="hover-info" style="display:none;">
+        <p id="hoverCoords"></p>
+      </div>
+    </div>
+
+    <!-- ===== PIXEL POPUP ===== -->
+    <!-- Modal that appears when user clicks a pixel -->
+    <div id="pixelModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+
+        <h2>Pixel Details</h2>
+
+        <!-- Pixel info display -->
+        <div class="pixel-info">
+          <p><strong>Coordinates:</strong> <span id="modalCoords"></span></p>
+          <p><strong>Current Price:</strong> $<span id="modalPrice"></span></p>
+          <p><strong>Times Purchased:</strong> <span id="modalPurchaseCount"></span> / 10</p>
+          <p><strong>Owner:</strong> <span id="modalOwner"></span></p>
+          <p><strong>Color:</strong> <span id="modalColor"></span></p>
+        </div>
+
+        <!-- Color picker (shown if user owns pixel) -->
+        <div id="colorChangeSection" style="display:none;">
+          <h3>Change Pixel Color</h3>
+          <p id="colorChangesAvailable"></p>
+          <input type="color" id="colorPicker" value="#000000">
+          <button id="applyColorBtn" class="btn btn-primary">Apply Color</button>
+        </div>
+
+        <!-- Purchase button (shown if not at max purchases) -->
+        <button id="purchaseBtn" class="btn btn-success" style="display:none;">
+          Purchase Pixel - $<span id="purchasePrice"></span>
+        </button>
+
+        <!-- Login prompt (shown if not logged in) -->
+        <p id="loginPrompt" class="text-center" style="display:none; color: #ff6b6b;">
+          <strong>Please log in to purchase pixels</strong>
+        </p>
+
+        <!-- Max purchases message -->
+        <p id="maxPurchasesMsg" style="display:none; color: #ff9800;">
+          This pixel has reached the maximum number of purchases (10) and cannot be purchased again.
+        </p>
+      </div>
+    </div>
+
+    <!-- ===== USER DASHBOARD ===== -->
+    <!-- Shows all pixels owned by logged-in user -->
+    <div id="dashboard" class="dashboard" style="display:none;">
+      <h2>📊 My Pixels</h2>
+      <div id="ownedPixelsContainer" class="pixels-grid">
+        <!-- Populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== LOADING INDICATOR ===== -->
+  <div id="loadingIndicator" class="loading" style="display:none;">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+  </div>
+
+  <!-- ===== AUTH MODALS ===== -->
+  
+  <!-- Login Modal -->
+  <div id="loginModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" onclick="document.getElementById('loginModal').style.display='none'">&times;</span>
+      <h2>Login</h2>
+      <form id="loginForm">
+        <input type="email" id="loginEmail" placeholder="Email" required>
+        <input type="password" id="loginPassword" placeholder="Password" required>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+      </form>
+      <p style="text-align: center; margin-top: 10px;">
+        Don't have an account? <a href="#" onclick="openRegisterModal()">Register here</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- Register Modal -->
+  <div id="registerModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" onclick="document.getElementById('registerModal').style.display='none'">&times;</span>
+      <h2>Register</h2>
+      <form id="registerForm">
+        <input type="email" id="registerEmail" placeholder="Email" required>
+        <input type="password" id="registerPassword" placeholder="Password (min 6 characters)" required>
+        <input type="password" id="registerPasswordConfirm" placeholder="Confirm Password" required>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Register</button>
+      </form>
+      <p style="text-align: center; margin-top: 10px;">
+        Already have an account? <a href="#" onclick="openLoginModal()">Login here</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- ===== SCRIPTS ===== -->
+  <script src="script.js"></script>
+
+</body>
+</html>

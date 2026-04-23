@@ -1,0 +1,56 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    container_name: million-pixel-backend
+    
+    ports:
+      - "5000:5000"
+    
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - DB_PATH=/app/database/million-pixel.db
+      - JWT_SECRET=your_super_secret_jwt_key_change_this_in_production_12345
+      - JWT_EXPIRY=7d
+      - STRIPE_SECRET_KEY=sk_test_YOUR_KEY_HERE
+      - STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY_HERE
+      - STRIPE_WEBHOOK_SECRET=whsec_YOUR_WEBHOOK_SECRET_HERE
+      - FRONTEND_URL=http://localhost:3000
+      - BACKEND_URL=http://localhost:5000
+    
+    restart: unless-stopped
+    
+    volumes:
+      - pixel-database:/app/database
+    
+    networks:
+      - pixel-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    
+    container_name: million-pixel-frontend
+    
+    ports:
+      - "3000:80"
+    
+    depends_on:
+      - backend
+    
+    restart: unless-stopped
+    
+    networks:
+      - pixel-network
+
+volumes:
+  pixel-database:
+    driver: local
+
+networks:
+  pixel-network:
+    driver: bridge
