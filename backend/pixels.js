@@ -19,18 +19,21 @@ const { getQuery, allQuery, runQuery } = require('./db');
 // ==================== PIXEL RETRIEVAL ====================
 
 /**
- * Function: getAllPixels()
- * Purpose: Fetch all 1,000,000 pixels from database
+ * Function: getAllPixels(start, limit)
+ * Purpose: Fetch pixels with optional pagination
  * 
- * Performance consideration:
- * - Returning all pixels as-is would be huge JSON
- * - In production, you might compress or paginate this
- * - For now, we return everything for frontend canvas rendering
+ * Parameters:
+ * - start: Starting index (default 0)
+ * - limit: Number of pixels to return (default 1000, max 1000)
  * 
  * Returns: Array of pixel objects
  */
-const getAllPixels = async () => {
+const getAllPixels = async (start = 0, limit = 1000) => {
   try {
+    // Validate parameters
+    start = Math.max(0, parseInt(start) || 0);
+    limit = Math.min(1000, Math.max(1, parseInt(limit) || 1000)); // Max 1000 per request
+
     const pixels = await allQuery(
       `SELECT 
         id, 
@@ -41,7 +44,9 @@ const getAllPixels = async () => {
         purchase_count, 
         owner_user_id 
       FROM pixels
-      ORDER BY id ASC`
+      ORDER BY id ASC
+      LIMIT ? OFFSET ?`,
+      [limit, start]
     );
 
     return pixels;
@@ -49,6 +54,7 @@ const getAllPixels = async () => {
     throw new Error('Failed to fetch pixels: ' + err.message);
   }
 };
+
 
 /**
  * Function: getPixel(x, y)

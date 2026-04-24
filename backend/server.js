@@ -102,14 +102,20 @@ app.post('/api/auth/login', (req, res) => {
 // These handle pixel data, purchases, and colors
 
 // Route: GET /api/pixels/all
-// Purpose: Load all pixel data for the grid
-// Returns: Array of all 1,000,000 pixels with their current state
+// Purpose: Load pixel data for the grid (with optional pagination)
+// Query params: ?start=0&limit=250
+// Returns: Array of pixels
 app.get('/api/pixels/all', (req, res) => {
-  pixels.getAllPixels()
+  const { start = 0, limit = 250 } = req.query;
+  
+  pixels.getAllPixels(parseInt(start), parseInt(limit))
     .then(data => {
       res.status(200).json({
         success: true,
-        data: data
+        data: data,
+        start: parseInt(start),
+        limit: parseInt(limit),
+        total: 1000000 // Total pixels in system
       });
     })
     .catch(err => {
@@ -119,6 +125,7 @@ app.get('/api/pixels/all', (req, res) => {
       });
     });
 });
+
 
 // Route: GET /api/pixels/:x/:y
 // Purpose: Get data for a specific pixel
