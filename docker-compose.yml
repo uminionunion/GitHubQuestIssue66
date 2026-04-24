@@ -1,7 +1,7 @@
 services:
   backend:
     build:
-      context: ./GitHubQuestIssue66
+      context: .
       dockerfile: Dockerfile
     
     container_name: million-pixel-backend
@@ -31,7 +31,7 @@ services:
 
   frontend:
     build:
-      context: ./GitHubQuestIssue66
+      context: .
       dockerfile: Dockerfile.frontend
     
     container_name: million-pixel-frontend
