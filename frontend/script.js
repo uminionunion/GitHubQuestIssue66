@@ -81,57 +81,88 @@ document.addEventListener('DOMContentLoaded', async () => {
  * const BATCH_SIZE = 250;
  * <<<<<< from 250 to 500 or 750 or 1000. and theoretically, as of 4/24/26; backend already supports up to 1000 being changed at once. (i think). if you see 250 elsewhere; it MIGHT be in relation to this original 250 here. MAYBE for THIS MILLION DOLLAR PIXEL PROJECT. -3:42pm on 4/24/26
  */
+/**
+ * Function: loadPixelsProgressively()
+ * Purpose: Fetch pixels in batches and render as we go
+ * 
+ * Optimization: Uses PARALLEL requests (much faster!)
+ * Instead of: Wait for batch 1 → Wait for batch 2 → Wait for batch 3
+ * We do:      Send batches 1-10 at once, render as they arrive
+ */
 async function loadPixelsProgressively() {
   console.log('📥 Loading pixels progressively...');
 
   const BATCH_SIZE = 1000;
   const TOTAL_PIXELS = 1000000;
+  const CONCURRENT_REQUESTS = 20; // Send 20 requests at once ⚡
+
   let pixelsRendered = 0;
+  let batchesCompleted = 0;
+  const totalBatches = Math.ceil(TOTAL_PIXELS / BATCH_SIZE);
 
   // Clear canvas with white background
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Fetch batches until all pixels loaded
-  for (let start = 0; start < TOTAL_PIXELS; start += BATCH_SIZE) {
-    try {
-      // Fetch batch from server
-      const response = await fetch(
-        `${API_BASE}/api/pixels/all?start=${start}&limit=${BATCH_SIZE}`
-      );
-      const data = await response.json();
+  // Create a queue of all batches to fetch
+  const batchQueue = [];
+  for (let i = 0; i < totalBatches; i++) {
+    batchQueue.push(i);
+  }
 
-      if (!data.success) {
-        throw new Error('Failed to load pixels');
+  // Process batches in groups (CONCURRENT_REQUESTS at a time)
+  while (batchQueue.length > 0) {
+    // Take next batch of requests to send
+    const batchGroup = batchQueue.splice(0, CONCURRENT_REQUESTS);
+
+    // Send ALL requests in this group at the same time (parallel)
+    const fetchPromises = batchGroup.map(async (batchIndex) => {
+      try {
+        const start = batchIndex * BATCH_SIZE;
+        
+        // Fetch this batch
+        const response = await fetch(
+          `${API_BASE}/api/pixels/all?start=${start}&limit=${BATCH_SIZE}`
+        );
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error('Failed to load pixels');
+        }
+
+        const batch = data.data;
+
+        // Render batch immediately
+        for (let pixel of batch) {
+          const color = pixel.color || '#e0e0e0';
+          ctx.fillStyle = color;
+          ctx.fillRect(pixel.x, pixel.y, PIXEL_SIZE, PIXEL_SIZE);
+
+          // Store in allPixels
+          allPixels.push(pixel);
+        }
+
+        pixelsRendered += batch.length;
+        batchesCompleted++;
+
+        // Update progress
+        const percentComplete = Math.round((batchesCompleted / totalBatches) * 100);
+        console.log(`⏳ Loading... ${percentComplete}%`);
+
+        return batch;
+      } catch (err) {
+        console.error('Error loading batch:', err);
+        throw err;
       }
+    });
 
-      const batch = data.data;
-
-      // Render batch immediately
-      for (let pixel of batch) {
-        const color = pixel.color || '#e0e0e0';
-        ctx.fillStyle = color;
-        ctx.fillRect(pixel.x, pixel.y, PIXEL_SIZE, PIXEL_SIZE);
-
-        // Store in allPixels for later use (color changes, etc)
-        allPixels.push(pixel);
-      }
-
-      pixelsRendered += batch.length;
-      const percentComplete = Math.round((pixelsRendered / TOTAL_PIXELS) * 100);
-      console.log(`⏳ Loading... ${percentComplete}%`);
-
-      // Small delay to prevent server overload
-      await new Promise(resolve => setTimeout(resolve, 5));
-
-    } catch (err) {
-      console.error('Error loading batch:', err);
-      throw err;
-    }
+    // Wait for ALL requests in this group to finish
+    await Promise.all(fetchPromises);
   }
 
   console.log(`✅ Loaded and rendered ${pixelsRendered} pixels`);
 }
+
 
 /**
  * Function: renderCanvas()
