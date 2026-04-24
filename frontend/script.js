@@ -33,7 +33,7 @@ let allPixels = [];
 const PIXEL_SIZE = 1;
 
 // API base URL
-const API_BASE = 'http://backend:5000';
+const API_BASE = 'https://page005.uminion.com';
 
 // ==================== INITIALIZATION ====================
 
