@@ -45,10 +45,17 @@
 
   <!-- ===== MAIN CONTAINER ===== -->
   <div class="container">
-    <!-- Instructions -->
+        <!-- Instructions -->
     <div class="instructions">
-      <p>💡 <strong>Click any pixel to purchase it!</strong> Starting price is $2! ***UnderConstruction***</p>
+      <p>
+        <!-- ===== LOADING SPINNER ===== -->
+        <div id="loadingSpinnerInline" class="loading-inline" style="display:none;">
+          <div class="spinner-small"></div>
+        </div>
+        💡 <strong>Click any pixel to purchase it!</strong> Starting price is $2, and doubles with each purchase (up to 10 times max).
+      </p>
     </div>
+
 
     <!-- ===== PIXEL GRID CANVAS ===== -->
     <!-- This is where the 1000x1000 grid renders
@@ -139,11 +146,6 @@
     </div>
   </div>
 
-    <!-- ===== LOADING INDICATOR ===== -->
-  <div id="loadingIndicator" class="loading" style="display:none;">
-    <div class="spinner"></div>
-    <p> Loading the 1mil pixels...</p>
-  </div>
 
   <!-- ===== AUTH MODALS ===== -->
   
