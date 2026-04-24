@@ -18,8 +18,8 @@ services:
       - STRIPE_SECRET_KEY=sk_test_YOUR_KEY_HERE
       - STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY_HERE
       - STRIPE_WEBHOOK_SECRET=whsec_YOUR_WEBHOOK_SECRET_HERE
-      - FRONTEND_URL=http://localhost:3000
-      - BACKEND_URL=http://localhost:5000
+      - FRONTEND_URL=http://72.61.7.100:5001
+      - BACKEND_URL=http://backend:5000
     
     restart: unless-stopped
     
