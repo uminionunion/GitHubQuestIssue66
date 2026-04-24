@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadPixelsProgressively() {
   console.log('📥 Loading pixels progressively...');
 
-  const BATCH_SIZE = 250;
+  const BATCH_SIZE = 1000;
   const TOTAL_PIXELS = 1000000;
   let pixelsRendered = 0;
 
