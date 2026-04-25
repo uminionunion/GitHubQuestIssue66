@@ -65,29 +65,113 @@ body {
   white-space: nowrap;
 }
 
-/* ===== HISTORY PAGES SECTION (NEW) ===== */
-.history-pages {
-  flex: 1;
-  display: flex;
+
+
+
+
+/* ===== HISTORY PAGES SECTION (MOVED TO BOTTOM) ===== */
+.history-pages-section {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  padding: 1.5rem 20px;
+  border-top: 2px solid #667eea;
+  display: flex !important;
   align-items: center;
-  gap: 1rem;
+  gap: 2rem;
   justify-content: center;
   flex-wrap: wrap;
+  margin-top: 2rem;
 }
 
-.history-label {
-  color: #fff;
+.history-pages-section h3 {
+  color: white;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 1rem;
+  margin: 0;
   white-space: nowrap;
 }
 
-.page-buttons {
+.history-pages-section .page-buttons {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   justify-content: center;
+  overflow-x: auto;
+  padding: 0 10px;
 }
+
+/* Keep existing .page-btn styles - they work fine */
+.page-btn {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-width: 40px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.page-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.page-btn.active {
+  background: #667eea;
+  border-color: #667eea;
+  box-shadow: 0 0 10px rgba(102, 126, 234, 0.6);
+}
+
+.page-btn.live-btn {
+  min-width: auto;
+  padding: 8px 14px;
+}
+
+/* Mobile responsive for history pages */
+@media (max-width: 768px) {
+  .history-pages-section {
+    padding: 1rem 15px;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .history-pages-section h3 {
+    width: 100%;
+    text-align: center;
+  }
+
+  .history-pages-section .page-buttons {
+    width: 100%;
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .history-pages-section {
+    padding: 0.75rem 10px;
+    gap: 0.5rem;
+  }
+
+  .page-btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    min-width: 35px;
+  }
+}
+
+
+
+
+
+
+
+
 
 /**
  * Page button styling
