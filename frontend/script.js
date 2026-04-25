@@ -28,7 +28,7 @@ let canvas = document.getElementById('pixelCanvas');
 let ctx = canvas.getContext('2d');
 
 // Stripe integration - Replace with your actual publishable key
-const stripe = Stripe(process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_YOUR_PUBLISHABLE_KEY');
+const stripe = Stripe('pk_test_YOUR_PUBLISHABLE_KEY');
 
 // Current user data
 let currentUser = null;
@@ -43,7 +43,7 @@ let currentHistoryPage = null;
 const PIXEL_SIZE = 1;
 
 // API base URL
-const API_BASE = process.env.API_BASE || 'https://page005.uminion.com';
+const API_BASE = 'https://page005.uminion.com';
 
 // Ticket types and their values
 // IMPORTANT: Must match backend TICKET_TYPES exactly
