@@ -1021,7 +1021,7 @@ async function showPixelModal(x, y) {
     showLoading(true);
 
     // ---- FETCH PIXEL DATA ----
-    const response = await fetch(`${API_BASE}/api/pixels${x}${y}`);
+    const response = await fetch(`${API_BASE}/api/pixels/${x}/${y}`);
     const data = await response.json();
 
     if (!data.success) {
