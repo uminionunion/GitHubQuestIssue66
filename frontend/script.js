@@ -440,7 +440,7 @@ async function loadPixelsProgressively() {
         
         // Fetch this batch from server
         const response = await fetch(
-          `${API_BASE}/api/pixels/all?start=${start}&limit=\${BATCH_SIZE}`
+          `${API_BASE}/api/pixels/all?start=${start}&limit=${BATCH_SIZE}`
         );
         const data = await response.json();
 
@@ -505,7 +505,7 @@ async function loadHistoryPagePixels(pageNumber) {
     showInlineSpinner(true);
 
     const response = await fetch(
-      `${API_BASE}/api/pixels/history/${pageNumber}`
+      `${API_BASE}/api/pixels/history${pageNumber}`
     );
     const data = await response.json();
 
@@ -1021,7 +1021,7 @@ async function showPixelModal(x, y) {
     showLoading(true);
 
     // ---- FETCH PIXEL DATA ----
-    const response = await fetch(`${API_BASE}/api/pixels/${x}/${y}`);
+    const response = await fetch(`${API_BASE}/api/pixels${x}${y}`);
     const data = await response.json();
 
     if (!data.success) {
@@ -1256,7 +1256,7 @@ async function handleColorChange() {
     console.log(`🎨 Changing pixel (${selectedPixel.x}, ${selectedPixel.y}) to ${color}`);
 
     const response = await fetch(
-      `${API_BASE}/api/pixels/${selectedPixel.x}/${selectedPixel.y}/change`,
+      `${API_BASE}/api/pixels${selectedPixel.x}${selectedPixel.y}/change`,
       {
         method: 'POST',
         headers: {
