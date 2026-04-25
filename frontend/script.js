@@ -52,6 +52,7 @@ const TICKET_TYPES = {
     name: 'blackTicket',
     displayName: 'Black Ticket',
     pixelTicketsValue: 1,
+    woocommerceUrl: 'https://page001.uminion.com/product/1-blackticket-1-pixelticket/',
     emoji: '🔵',
     priceInDollars: 2.00
   },
@@ -59,6 +60,7 @@ const TICKET_TYPES = {
     name: 'purpleTicket',
     displayName: 'Purple Ticket',
     pixelTicketsValue: 5,
+    woocommerceUrl: 'https://page001.uminion.com/product/1-purpleticket-5-pixeltickets/',
     emoji: '🟣',
     priceInDollars: 10.00
   },
@@ -66,6 +68,7 @@ const TICKET_TYPES = {
     name: 'emeraldTicket',
     displayName: 'Emerald Ticket',
     pixelTicketsValue: 10,
+    woocommerceUrl: 'https://page001.uminion.com/product/1-emeraldticket-10-pixeltickets/',
     emoji: '🟢',
     priceInDollars: 20.00
   },
@@ -73,6 +76,7 @@ const TICKET_TYPES = {
     name: 'rubyTicket',
     displayName: 'Ruby Ticket',
     pixelTicketsValue: 25,
+    woocommerceUrl: 'https://page001.uminion.com/product/1-rubyticket-25-pixeltickets/',
     emoji: '🔴',
     priceInDollars: 50.00
   },
@@ -80,6 +84,7 @@ const TICKET_TYPES = {
     name: 'sapphireTicket',
     displayName: 'Sapphire Ticket',
     pixelTicketsValue: 50,
+    woocommerceUrl: 'https://page001.uminion.com/product/1-sapphire-ticket-50-pixeltickets/',
     emoji: '🔵',
     priceInDollars: 100.00
   },
@@ -87,6 +92,7 @@ const TICKET_TYPES = {
     name: 'silverTicket',
     displayName: 'Silver Ticket',
     pixelTicketsValue: 100,
+    woocommerceUrl: 'https://page001.uminion.com/product/1-silverticket-100-pixeltickets/',
     emoji: '⚪',
     priceInDollars: 200.00
   },
@@ -94,6 +100,7 @@ const TICKET_TYPES = {
     name: 'goldTicket',
     displayName: 'Gold Ticket',
     pixelTicketsValue: 250,
+    woocommerceUrl: 'https://page001.uminion.com/product/1-goldticket-250-pixeltickets/',
     emoji: '🟡',
     priceInDollars: 500.00
   },
@@ -101,6 +108,7 @@ const TICKET_TYPES = {
     name: 'diamondTicket',
     displayName: 'Diamond Ticket',
     pixelTicketsValue: 500,
+    woocommerceUrl: 'https://page001.uminion.com/product/1-diamondticket-500-pixeltickets/',
     emoji: '💎',
     priceInDollars: 1000.00
   },
@@ -108,6 +116,7 @@ const TICKET_TYPES = {
     name: 'doublediamondTicket',
     displayName: 'Double Diamond Ticket',
     pixelTicketsValue: 1000,
+    woocommerceUrl: 'https://page001.uminion.com/product/1-doublediamondticket-1000-pixeltickets/',
     emoji: '💠',
     priceInDollars: 2000.00
   }
@@ -1371,20 +1380,6 @@ function closeTicketShop() {
 
 /**
  * Function: buyTickets(ticketType, quantity)
- * Purpose: Create Stripe checkout session for ticket purchase
- * 
- * Process:
- * 1. Validate ticket type and quantity
- * 2. Send request to /api/tickets/buy
- * 3. Backend creates Stripe checkout session
- * 4. Redirect to Stripe checkout
- * 5. User pays
- * 6. Stripe webhook adds tickets to account
- * 7. User redirected back to success page
- * 
- * Parameters:
- * - ticketType: e.g., 'diamondTicket'
- * - quantity: Number of tickets (1-100)
  */
 async function buyTickets(ticketType, quantity = 1) {
   try {
@@ -1394,60 +1389,23 @@ async function buyTickets(ticketType, quantity = 1) {
       return;
     }
 
-    // ---- VALIDATION ----
     if (!TICKET_TYPES[ticketType]) {
       showError('Invalid ticket type');
       return;
     }
 
-    if (!quantity || quantity < 1 || quantity > 100) {
-      showError('Quantity must be between 1 and 100');
-      return;
-    }
-
-    showLoading(true);
-
     const ticketInfo = TICKET_TYPES[ticketType];
-    console.log(`🎟️ Buying ${quantity}x ${ticketInfo.displayName}`);
+    console.log(`🎟️ Redirecting to WooCommerce: ${ticketInfo.displayName}`);
 
-    // ---- REQUEST CHECKOUT SESSION ----
-    const response = await fetch(`${API_BASE}/api/tickets/buy`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${currentUser.token}`
-      },
-      body: JSON.stringify({
-        ticketType: ticketType,
-        quantity: parseInt(quantity)
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || 'Failed to create checkout session');
-    }
-
-    console.log(`✅ Checkout session created: ${data.data.sessionId}`);
-
-    // ---- REDIRECT TO STRIPE ----
-    // Use Stripe.js to redirect to checkout
-    const result = await stripe.redirectToCheckout({
-      sessionId: data.data.sessionId
-    });
-
-    if (result.error) {
-      throw new Error(result.error.message);
-    }
+    // ---- REDIRECT TO WOOCOMMERCE ----
+    window.location.href = ticketInfo.woocommerceUrl;
 
   } catch (err) {
-    console.error('❌ Ticket purchase error:', err);
+    console.error('❌ Error:', err);
     showError(err.message);
-  } finally {
-    showLoading(false);
   }
 }
+
 
 // ==================== MODAL HELPERS ====================
 
