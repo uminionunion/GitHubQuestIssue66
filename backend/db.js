@@ -9,6 +9,13 @@
  * 1. Create/connect to SQLite database
  * 2. Initialize tables if they don't exist
  * 3. Provide query functions for other modules
+ * 
+ * ===== CHANGES IN THIS VERSION =====
+ * REMOVED: purchases table (no longer tracking individual pixel purchases)
+ * ADDED: pixel_history table (tracks every color change)
+ * ADDED: user_tickets table (tracks user ticket inventory)
+ * ADDED: ticket_purchases table (tracks ticket transactions)
+ * MODIFIED: pixels table (removed ownership columns, added change tracking)
  */
 
 const sqlite3 = require('sqlite3').verbose();
@@ -33,7 +40,9 @@ const db = new sqlite3.Database(dbPath, (err) => {
  * Tables created:
  * 1. users - Store user accounts
  * 2. pixels - Store pixel data (1,000,000 pixels)
- * 3. purchases - Store purchase history
+ * 3. pixel_history - NEW: Track every color change to each pixel
+ * 4. user_tickets - NEW: Track user ticket inventory
+ * 5. ticket_purchases - NEW: Track ticket purchase transactions
  * 
  * Returns: Promise that resolves when all tables are created
  */
@@ -43,6 +52,7 @@ const initializeDatabase = () => {
     db.serialize(() => {
       // ---- TABLE 1: USERS ----
       // Stores user account information
+      // NO CHANGES from previous version
       db.run(`
         CREATE TABLE IF NOT EXISTS users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,19 +71,32 @@ const initializeDatabase = () => {
 
       // ---- TABLE 2: PIXELS ----
       // Stores data for each of the 1,000,000 pixels
+      // 
+      // CHANGES FROM OLD VERSION:
+      // REMOVED columns:
+      //   - current_price (no longer needed, pixels not owned)
+      //   - purchase_count (no longer needed)
+      //   - owner_user_id (no longer needed, pixels not owned)
+      //   - color_changes_available (no longer needed)
+      // 
+      // ADDED columns:
+      //   - change_count (how many times this pixel has been changed: 0-10)
+      //   - next_cost_tickets (cost in PixelTickets for next change)
+      //   - last_changed_by (user_id of who changed it most recently)
+      //   - last_changed_at (timestamp of last change)
       db.run(`
         CREATE TABLE IF NOT EXISTS pixels (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           x INTEGER NOT NULL,
           y INTEGER NOT NULL,
-          color TEXT,
-          current_price INTEGER DEFAULT 2,
-          purchase_count INTEGER DEFAULT 0,
-          owner_user_id INTEGER,
-          color_changes_available INTEGER DEFAULT 0,
+          color TEXT DEFAULT '#FFFFFF',
+          change_count INTEGER DEFAULT 0,
+          next_cost_tickets INTEGER DEFAULT 1,
+          last_changed_by INTEGER,
+          last_changed_at DATETIME,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           UNIQUE(x, y),
-          FOREIGN KEY(owner_user_id) REFERENCES users(id)
+          FOREIGN KEY(last_changed_by) REFERENCES users(id)
         )
       `, (err) => {
         if (err && !err.message.includes('already exists')) {
@@ -84,28 +107,129 @@ const initializeDatabase = () => {
         }
       });
 
-      // ---- TABLE 3: PURCHASES ----
-      // Stores record of every pixel purchase transaction
+      // ---- TABLE 3: PIXEL_HISTORY (NEW) ----
+      // Tracks EVERY color change to every pixel
+      // 
+      // This allows us to:
+      // 1. Show "Page 1" through "Page 10" views
+      // 2. See who changed each pixel and when
+      // 3. Replay pixel evolution
+      // 
+      // Example rows:
+      // pixel (5,5) change #1: red, user_123, 2024-01-01 10:00 AM
+      // pixel (5,5) change #2: blue, user_456, 2024-01-01 02:30 PM
+      // pixel (5,5) change #3: green, user_789, 2024-01-02 11:15 AM
       db.run(`
-        CREATE TABLE IF NOT EXISTS purchases (
+        CREATE TABLE IF NOT EXISTS pixel_history (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id INTEGER NOT NULL,
-          pixel_id INTEGER NOT NULL,
-          price_paid INTEGER NOT NULL,
-          purchase_number INTEGER NOT NULL,
-          timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-          stripe_session_id TEXT,
-          FOREIGN KEY(user_id) REFERENCES users(id),
-          FOREIGN KEY(pixel_id) REFERENCES pixels(id)
+          pixel_x INTEGER NOT NULL,
+          pixel_y INTEGER NOT NULL,
+          change_number INTEGER NOT NULL,
+          color TEXT NOT NULL,
+          changed_by_user_id INTEGER NOT NULL,
+          changed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(changed_by_user_id) REFERENCES users(id),
+          UNIQUE(pixel_x, pixel_y, change_number)
         )
       `, (err) => {
         if (err && !err.message.includes('already exists')) {
-          console.error('❌ Error creating purchases table:', err);
+          console.error('❌ Error creating pixel_history table:', err);
           reject(err);
         } else {
-          console.log('✅ Purchases table ready');
+          console.log('✅ Pixel History table ready');
         }
       });
+
+      // ---- TABLE 4: USER_TICKETS (NEW) ----
+      // Tracks how many tickets each user has
+      // 
+      // Each column represents a different colored ticket type:
+      // - blackTickets: 1 PixelTicket each
+      // - purpleTickets: 5 PixelTickets each
+      // - emeraldTickets: 10 PixelTickets each
+      // - rubyTickets: 25 PixelTickets each
+      // - sapphireTickets: 50 PixelTickets each
+      // - silverTickets: 100 PixelTickets each
+      // - goldTickets: 250 PixelTickets each
+      // - diamondTickets: 500 PixelTickets each
+      // - doublediamondTickets: 1,000 PixelTickets each
+      // - total_pixeltickets: calculated sum (backend only)
+      // 
+      // Example row:
+      // user_id: 1
+      // blackTickets: 5 (= 5 PixelTickets)
+      // purpleTickets: 2 (= 10 PixelTickets)
+      // total_pixeltickets: 15 (5 + 10)
+      db.run(`
+        CREATE TABLE IF NOT EXISTS user_tickets (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER UNIQUE NOT NULL,
+          blackTickets INTEGER DEFAULT 0,
+          purpleTickets INTEGER DEFAULT 0,
+          emeraldTickets INTEGER DEFAULT 0,
+          rubyTickets INTEGER DEFAULT 0,
+          sapphireTickets INTEGER DEFAULT 0,
+          silverTickets INTEGER DEFAULT 0,
+          goldTickets INTEGER DEFAULT 0,
+          diamondTickets INTEGER DEFAULT 0,
+          doublediamondTickets INTEGER DEFAULT 0,
+          total_pixeltickets INTEGER DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+      `, (err) => {
+        if (err && !err.message.includes('already exists')) {
+          console.error('❌ Error creating user_tickets table:', err);
+          reject(err);
+        } else {
+          console.log('✅ User Tickets table ready');
+        }
+      });
+
+      // ---- TABLE 5: TICKET_PURCHASES (NEW) ----
+      // Tracks every ticket purchase transaction
+      // 
+      // Used for:
+      // 1. Payment verification (webhook confirmation)
+      // 2. Transaction history
+      // 3. Debugging failed payments
+      // 
+      // Example row:
+      // user_id: 1
+      // ticket_type: 'diamondTicket'
+      // quantity: 1
+      // total_cost_dollars: 1000 (in cents, so 100000)
+      // stripe_session_id: 'cs_live_a1b2c3d4e5f6...'
+      // status: 'completed'
+      db.run(`
+        CREATE TABLE IF NOT EXISTS ticket_purchases (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          ticket_type TEXT NOT NULL,
+          quantity INTEGER NOT NULL,
+          total_cost_cents INTEGER NOT NULL,
+          stripe_session_id TEXT UNIQUE NOT NULL,
+          status TEXT DEFAULT 'pending',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          completed_at DATETIME,
+          FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+      `, (err) => {
+        if (err && !err.message.includes('already exists')) {
+          console.error('❌ Error creating ticket_purchases table:', err);
+          reject(err);
+        } else {
+          console.log('✅ Ticket Purchases table ready');
+        }
+      });
+
+      // ---- NOTE: OLD PURCHASES TABLE NO LONGER USED ----
+      // The old "purchases" table tracked individual pixel purchases
+      // We no longer need this since pixels aren't owned anymore
+      // You can optionally delete it from the database manually:
+      // DROP TABLE IF EXISTS purchases;
+      // But it won't hurt to leave it there (it will just be unused)
 
       // Check if pixels table is empty, if so, populate it
       db.get('SELECT COUNT(*) as count FROM pixels', (err, row) => {
@@ -211,7 +335,13 @@ const populatePixels = () => {
  * - sql: SQL statement string
  * - params: Array of values to bind to ? placeholders
  * 
- * Returns: Promise with result
+ * Example:
+ * await runQuery(
+ *   'UPDATE user_tickets SET total_pixeltickets = ? WHERE user_id = ?',
+ *   [1000, 5]
+ * )
+ * 
+ * Returns: Promise with result { id: lastID, changes: number of rows changed }
  */
 const runQuery = (sql, params = []) => {
   return new Promise((resolve, reject) => {
@@ -229,7 +359,13 @@ const runQuery = (sql, params = []) => {
  * Function: getQuery(sql, params)
  * Purpose: Execute SQL SELECT for a single row
  * 
- * Returns: Promise with single row object or null
+ * Example:
+ * const pixel = await getQuery(
+ *   'SELECT * FROM pixels WHERE x = ? AND y = ?',
+ *   [5, 10]
+ * )
+ * 
+ * Returns: Promise with single row object or null if not found
  */
 const getQuery = (sql, params = []) => {
   return new Promise((resolve, reject) => {
@@ -246,6 +382,12 @@ const getQuery = (sql, params = []) => {
 /**
  * Function: allQuery(sql, params)
  * Purpose: Execute SQL SELECT for multiple rows
+ * 
+ * Example:
+ * const userPixels = await allQuery(
+ *   'SELECT * FROM pixel_history WHERE pixel_x = ? AND pixel_y = ?',
+ *   [5, 10]
+ * )
  * 
  * Returns: Promise with array of row objects
  */

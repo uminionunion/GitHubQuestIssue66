@@ -2,11 +2,23 @@
  * MAIN STYLESHEET
  * 
  * This file styles all the frontend components:
- * - Navigation bar
+ * - Navigation bar with ticket inventory
  * - Canvas grid
- * - Modals/popups
+ * - Modals/popups (pixel modal, ticket shop, auth)
  * - Buttons and forms
+ * - History page buttons
+ * - Ticket displays
  * - Responsive design
+ * 
+ * ===== CHANGES IN THIS VERSION =====
+ * ADDED: Ticket inventory display in navbar
+ * ADDED: History page buttons styling (1-10)
+ * ADDED: Ticket shop modal styling
+ * ADDED: Color picker interface styling
+ * ADDED: Cost display in PixelTickets
+ * ADDED: Insufficient funds warning styling
+ * ADDED: Max changes reached styling
+ * MODIFIED: Pixel modal for ticket system (not ownership)
  */
 
 /* ========== RESET & GLOBAL STYLES ========== */
@@ -42,28 +54,139 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 0 20px;
+  gap: 2rem;
 }
 
 .logo {
   color: white;
   font-size: 1.8rem;
   margin: 0;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* ===== HISTORY PAGES SECTION (NEW) ===== */
+.history-pages {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.history-label {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.page-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/**
+ * Page button styling
+ * Shows pages 1-10 for history navigation
+ */
+.page-btn {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-width: 40px;
+  text-align: center;
+}
+
+.page-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+/**
+ * Active page button - shows which page user is on
+ */
+.page-btn.active {
+  background: #667eea;
+  border-color: #667eea;
+  box-shadow: 0 0 10px rgba(102, 126, 234, 0.6);
+}
+
+/**
+ * Live canvas button styling
+ */
+.page-btn.live-btn {
+  min-width: auto;
+  padding: 8px 14px;
 }
 
 .nav-right {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* ===== TICKET INVENTORY DISPLAY (NEW) ===== */
+.ticket-inventory {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px 15px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.inventory-label {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.inventory-items {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.inventory-item {
+  color: white;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.inventory-total {
+  color: #4ade80;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  white-space: nowrap;
 }
 
 .user-email {
   color: #fff;
-  font-size: 0.95rem;
-  margin-right: 10px;
+  font-size: 0.9rem;
   background: rgba(255, 255, 255, 0.1);
-  padding: 5px 10px;
+  padding: 8px 12px;
   border-radius: 20px;
+  white-space: nowrap;
 }
 
 /* ========== BUTTONS ========== */
@@ -76,6 +199,7 @@ body {
   font-weight: 600;
   transition: all 0.3s ease;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .btn-primary {
@@ -122,6 +246,24 @@ body {
   box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
 }
 
+/**
+ * Warning button styling (for "Buy Tickets")
+ */
+.btn-warning {
+  background: #ff9800;
+  color: white;
+}
+
+.btn-warning:hover {
+  background: #e68900;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+}
+
+.btn-full {
+  width: 100%;
+}
+
 /* ========== CONTAINER & LAYOUT ========== */
 .container {
   max-width: 1400px;
@@ -142,7 +284,7 @@ body {
 /* ========== CANVAS GRID ========== */
 .canvas-container {
   position: relative;
-  display: block;  /* Changed from inline-block (which looked GREAT, gave an off-center (to the left) look) but trying out CENTERED LOOK for now; but feel free changing it back wheneves -Salem -9:19pm on 4/22/26  */
+  display: block;
   margin: 2rem auto;
   width: 100%;
   max-width: 1000px;
@@ -152,7 +294,6 @@ body {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   overflow: hidden;
 }
-
 
 #pixelCanvas {
   display: block;
@@ -165,7 +306,7 @@ body {
 /* Hover info tooltip */
 .hover-info {
   position: absolute;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.9);
   color: white;
   padding: 8px 12px;
   border-radius: 5px;
@@ -173,6 +314,7 @@ body {
   pointer-events: none;
   z-index: 50;
   white-space: nowrap;
+  border: 1px solid rgba(102, 126, 234, 0.5);
 }
 
 /* ========== MODALS ========== */
@@ -183,10 +325,16 @@ body {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
-  display: flex;
+  display: none;
   justify-content: center;
   align-items: center;
   z-index: 200;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.modal[style*="display: flex"] {
+  display: flex !important;
 }
 
 .modal-content {
@@ -198,6 +346,7 @@ body {
   position: relative;
   box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
   animation: slideIn 0.3s ease-out;
+  margin: auto;
 }
 
 @keyframes slideIn {
@@ -218,6 +367,14 @@ body {
   font-size: 2rem;
   cursor: pointer;
   color: #999;
+  background: none;
+  border: none;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .close:hover {
@@ -234,18 +391,384 @@ body {
   color: #667eea;
 }
 
-/* ========== PIXEL INFO ========== */
-.pixel-info {
-  background: #f5f5f5;
-  padding: 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
+/* ===== PIXEL MODAL STYLING (UPGRADED) ===== */
+.pixel-modal {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  max-width: 550px !important;
 }
 
-.pixel-info p {
-  margin: 0.8rem 0;
+.pixel-modal h2 {
+  color: white !important;
+  margin-bottom: 25px !important;
+  font-size: 28px !important;
+  text-align: center !important;
+}
+
+.pixel-modal .close {
+  color: rgba(255, 255, 255, 0.8) !important;
+  opacity: 0.8;
+}
+
+.pixel-modal .close:hover {
+  color: white !important;
+  opacity: 1;
+}
+
+/* Info rows styling */
+.pixel-info {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+}
+
+.info-value {
+  font-size: 16px;
+  color: white;
+  font-weight: 500;
+}
+
+.info-value.price {
+  font-size: 20px;
+  font-weight: bold;
+  color: #4ade80;
+}
+
+.info-value.cost-tickets {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ffd700;
+}
+
+.cost-breakdown {
+  display: block;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 3px;
+}
+
+.color-swatch {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+#colorPreview {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== ACTION SECTIONS (NEW & UPDATED) ===== */
+.action-section {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 18px;
+  margin-bottom: 15px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.action-section h3 {
+  color: white !important;
+  margin-bottom: 12px !important;
+  font-size: 18px !important;
+}
+
+.action-section p {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 15px 0;
+  line-height: 1.5;
+}
+
+/* ===== COLOR CHANGE SECTION (NEW) ===== */
+.change-section {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1)) !important;
+  border-left: 4px solid #4ade80;
+}
+
+.change-section h3 {
+  color: #4ade80 !important;
+}
+
+.color-picker-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.color-picker-container label {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.color-input-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.color-picker-input {
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.color-picker-input:hover {
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 15px rgba(102, 126, 234, 0.3);
+}
+
+.hex-input {
+  flex: 1;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.hex-input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+}
+
+/* ===== INSUFFICIENT FUNDS SECTION (NEW) ===== */
+.insufficient-funds {
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.1)) !important;
+  border-left: 4px solid #f44336;
+}
+
+.warning-box {
+  text-align: center;
+}
+
+.warning-text {
+  color: #ff6b6b !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  margin-bottom: 10px !important;
+}
+
+.shortage-text {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 14px !important;
+  margin-bottom: 15px !important;
+}
+
+/* ===== MAX CHANGES SECTION (NEW) ===== */
+.max-changes {
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(255, 152, 0, 0.1)) !important;
+  border-left: 4px solid #ff9800;
+  text-align: center;
+}
+
+.max-box p {
+  color: #ffeb3b !important;
+  margin: 8px 0 !important;
+}
+
+/* ===== LOGIN SECTION (UPDATED) ===== */
+.login-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  text-align: center;
+}
+
+.login-text {
+  font-size: 16px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: #ffeb3b !important;
+  font-weight: 600;
+  width: 100%;
+}
+
+.modal-auth-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.modal-auth-buttons .btn {
+  padding: 10px 18px;
+  font-weight: 600;
   font-size: 0.95rem;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 120px;
+}
+
+/* ===== USER INVENTORY SECTION (NEW) ===== */
+.inventory-section {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.1)) !important;
+  border-left: 4px solid #667eea;
+}
+
+.inventory-section h3 {
+  color: #4ade80 !important;
+}
+
+.ticket-display {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
   line-height: 1.6;
+  word-break: break-word;
+}
+
+/* ===== TICKET SHOP MODAL (NEW) ===== */
+.ticket-shop-modal {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  max-width: 800px !important;
+}
+
+.ticket-shop-modal h2 {
+  color: white !important;
+  margin-bottom: 10px !important;
+}
+
+.shop-intro {
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 16px;
+}
+
+/* Ticket options grid */
+.tickets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.ticket-option {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.ticket-option:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.ticket-icon {
+  font-size: 36px;
+}
+
+.ticket-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: white;
+}
+
+.ticket-value {
+  font-size: 13px;
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.ticket-price {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ffd700;
+}
+
+.ticket-amount {
+  width: 100%;
+  margin-top: 5px;
+}
+
+.ticket-qty {
+  width: 60px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: white;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.ticket-qty:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.buy-ticket-btn {
+  width: 100%;
+  padding: 10px !important;
+  margin-top: 8px;
+  font-size: 14px !important;
+}
+
+.shop-info {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 15px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.shop-info p {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 8px 0;
+  font-size: 14px;
 }
 
 /* ========== FORMS ========== */
@@ -255,10 +778,23 @@ form {
   gap: 1rem;
 }
 
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  color: #333;
+  font-weight: 600;
+  font-size: 14px;
+}
+
 input[type="email"],
 input[type="password"],
 input[type="color"],
-input[type="text"] {
+input[type="text"],
+input[type="number"] {
   padding: 12px;
   border: 2px solid #ddd;
   border-radius: 5px;
@@ -269,16 +805,11 @@ input[type="text"] {
 input[type="email"]:focus,
 input[type="password"]:focus,
 input[type="color"]:focus,
-input[type="text"]:focus {
+input[type="text"]:focus,
+input[type="number"]:focus {
   outline: none;
   border-color: #667eea;
-  box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
-}
-
-input[type="color"] {
-  width: 100%;
-  height: 50px;
-  cursor: pointer;
+  box-shadow: 0 0 8px rgba(102, 126, 234, 0.3);
 }
 
 /* ========== DASHBOARD ========== */
@@ -336,7 +867,7 @@ input[type="color"] {
   margin: 0.3rem 0;
 }
 
-/* ========== INLINE LOADING SPINNER ========== */
+/* ========== LOADING INDICATORS ========== */
 .loading-inline {
   display: inline-flex !important;
   align-items: center;
@@ -353,24 +884,24 @@ input[type="color"] {
   animation: spin 0.8s linear infinite;
 }
 
-/* Update existing .loading to stay centered (for other uses) */
-.loading {
+.loading-indicator {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   background: rgba(0, 0, 0, 0.9);
-  padding: 2rem;
+  padding: 3rem;
   border-radius: 15px;
   text-align: center;
   z-index: 300;
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
 }
 
-.loading p {
+.loading-indicator p {
   color: white;
   margin: 0;
   font-size: 1.1rem;
@@ -384,7 +915,6 @@ input[type="color"] {
   height: 50px;
   animation: spin 0.8s linear infinite;
 }
-
 
 @keyframes spin {
   0% { transform: rotate(0deg); }
@@ -408,20 +938,50 @@ input[type="color"] {
   color: #ff9800;
 }
 
-/* ========== SECTION STYLING ========== */
-#colorChangeSection {
-  background: #e8f5e9;
-  padding: 1rem;
-  border-radius: 8px;
-  margin: 1rem 0;
+/* ========== LARGE BUTTON STYLING ========== */
+.btn-large {
+  width: 100%;
+  padding: 14px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  transition: all 0.3s ease;
 }
 
-#colorChangeSection p {
-  color: #2e7d32;
-  margin-bottom: 1rem;
+.btn-large:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 /* ========== RESPONSIVE DESIGN ========== */
+
+/* Tablet screens */
+@media (max-width: 1024px) {
+  .navbar-content {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .history-pages {
+    width: 100%;
+    order: 3;
+  }
+
+  .page-buttons {
+    gap: 6px;
+  }
+
+  .page-btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    min-width: 35px;
+  }
+
+  .ticket-inventory {
+    order: 2;
+  }
+}
+
 /* Tablet screens */
 @media (max-width: 768px) {
   .navbar-content {
@@ -431,6 +991,7 @@ input[type="color"] {
 
   .logo {
     font-size: 1.4rem;
+    width: 100%;
   }
 
   .nav-right {
@@ -439,9 +1000,31 @@ input[type="color"] {
     justify-content: center;
   }
 
+  .history-pages {
+    width: 100%;
+  }
+
+  .ticket-inventory {
+    width: 100%;
+    justify-content: center;
+  }
+
   .modal-content {
     max-width: 90%;
     padding: 1.5rem;
+  }
+
+  .ticket-shop-modal {
+    max-width: 95% !important;
+  }
+
+  .tickets-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  .ticket-option {
+    padding: 12px;
   }
 
   .pixels-grid {
@@ -451,6 +1034,10 @@ input[type="color"] {
   #pixelCanvas {
     max-width: 100%;
     height: auto;
+  }
+
+  .page-buttons {
+    width: 100%;
   }
 }
 
@@ -471,6 +1058,33 @@ input[type="color"] {
     padding: 1rem;
   }
 
+  .pixel-modal {
+    max-width: 95% !important;
+    padding: 1.5rem !important;
+  }
+
+  .ticket-shop-modal {
+    max-width: 98% !important;
+    padding: 1rem !important;
+  }
+
+  .tickets-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .ticket-option {
+    padding: 14px;
+  }
+
+  .ticket-icon {
+    font-size: 28px;
+  }
+
+  .ticket-name {
+    font-size: 13px;
+  }
+
   .pixels-grid {
     grid-template-columns: 1fr;
   }
@@ -478,9 +1092,219 @@ input[type="color"] {
   .logo {
     font-size: 1.2rem;
   }
+
+  .history-label {
+    font-size: 0.8rem;
+  }
+
+  .page-buttons {
+    gap: 4px;
+  }
+
+  .page-btn {
+    padding: 6px 8px;
+    font-size: 0.7rem;
+    min-width: 32px;
+  }
+
+  .inventory-label {
+    font-size: 0.8rem;
+  }
+
+  .inventory-items {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .inventory-item {
+    font-size: 0.75rem;
+    padding: 3px 6px;
+  }
+
+  .inventory-total {
+    font-size: 0.75rem;
+  }
+
+  .user-email {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+  }
+
+  .navbar-content {
+    padding: 0 10px;
+  }
+
+  .nav-right {
+    gap: 8px;
+  }
+
+  .ticket-inventory {
+    padding: 6px 10px;
+    gap: 8px;
+  }
+
+  .color-picker-container {
+    gap: 8px;
+  }
+
+  .color-input-group {
+    gap: 8px;
+  }
+
+  .color-picker-input {
+    width: 50px;
+    height: 50px;
+  }
+
+  .hex-input {
+    font-size: 12px;
+  }
+
+  .modal-auth-buttons {
+    flex-direction: column;
+  }
+
+  .modal-auth-buttons .btn {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .pixel-info {
+    padding: 12px;
+  }
+
+  .info-row {
+    padding: 10px 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .action-section {
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+
+  .action-section h3 {
+    font-size: 16px !important;
+  }
+
+  .action-section p {
+    font-size: 13px !important;
+  }
+
+  .btn-large {
+    padding: 12px !important;
+    font-size: 14px !important;
+  }
+
+  .ticket-qty {
+    width: 50px;
+    font-size: 12px;
+  }
+
+  .buy-ticket-btn {
+    font-size: 12px !important;
+    padding: 8px !important;
+  }
+
+  .dashboard {
+    padding: 1rem;
+  }
+
+  .canvas-container {
+    max-width: 100%;
+    margin: 1rem 0;
+  }
+
+  .loading-indicator {
+    padding: 2rem;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border-width: 3px;
+  }
+
+  .spinner-small {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+  .logo {
+    font-size: 1rem;
+  }
+
+  .btn {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  .page-btn {
+    padding: 4px 6px;
+    font-size: 0.65rem;
+    min-width: 28px;
+  }
+
+  .tickets-grid {
+    gap: 8px;
+  }
+
+  .ticket-option {
+    padding: 10px;
+    gap: 6px;
+  }
+
+  .ticket-icon {
+    font-size: 24px;
+  }
+
+  .ticket-name {
+    font-size: 12px;
+  }
+
+  .ticket-value {
+    font-size: 11px;
+  }
+
+  .ticket-price {
+    font-size: 16px;
+  }
+
+  .modal-content {
+    padding: 1rem;
+    border-radius: 10px;
+  }
+
+  .close {
+    font-size: 1.5rem;
+  }
+
+  .pixel-info {
+    padding: 10px;
+  }
+
+  .info-label {
+    font-size: 12px;
+  }
+
+  .info-value {
+    font-size: 13px;
+  }
+
+  .color-picker-input {
+    width: 45px;
+    height: 45px;
+  }
 }
 
 /* ========== ACCESSIBILITY ========== */
+
 /* High contrast mode support */
 @media (prefers-contrast: more) {
   .btn {
@@ -490,183 +1314,257 @@ input[type="color"] {
   .pixel-card {
     border: 2px solid white;
   }
+
+  .modal-content {
+    border: 2px solid #333;
+  }
+
+  .page-btn {
+    border-width: 2px;
+  }
+
+  .ticket-option {
+    border-width: 3px;
+  }
+
+  .action-section {
+    border-width: 2px;
+  }
 }
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  }
 
-/* ===== PIXEL MODAL STYLING ===== */
+  .modal-content {
+    background: #2d2d2d;
+    color: #f0f0f0;
+  }
 
-.pixel-modal {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: white !important;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
-  border-radius: 12px !important;
-  max-width: 500px !important;
+  input[type="email"],
+  input[type="password"],
+  input[type="text"],
+  input[type="number"] {
+    background: #3a3a3a;
+    color: #f0f0f0;
+    border-color: #555;
+  }
+
+  .instructions {
+    background: rgba(50, 50, 50, 0.95);
+    color: #f0f0f0;
+  }
+
+  .dashboard {
+    background: rgba(50, 50, 50, 0.95);
+    color: #f0f0f0;
+  }
+
+  .dashboard h2 {
+    color: #f0f0f0;
+  }
+
+  .modal h2,
+  .modal h3 {
+    color: #f0f0f0;
+  }
+
+  .pixel-info {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .action-section {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .ticket-display {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .shop-info {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .ticket-option {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .close {
+    color: #999;
+  }
+
+  .close:hover {
+    color: #f0f0f0;
+  }
 }
 
-.pixel-modal h2 {
-  color: white !important;
-  margin-bottom: 25px !important;
-  font-size: 28px !important;
-  text-align: center !important;
+/* ========== PRINT STYLES ========== */
+@media print {
+  .navbar,
+  .instructions,
+  .btn,
+  .modal {
+    display: none !important;
+  }
+
+  .canvas-container {
+    max-width: 100%;
+    box-shadow: none;
+    page-break-inside: avoid;
+  }
+
+  body {
+    background: white;
+  }
 }
 
-.pixel-modal .close {
-  color: white !important;
-  opacity: 0.8;
-}
-
-.pixel-modal .close:hover {
-  opacity: 1;
-}
-
-/* Info rows styling */
-.pixel-info {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-  backdrop-filter: blur(10px);
-}
-
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.info-row:last-child {
-  border-bottom: none;
-}
-
-.info-label {
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 14px;
-}
-
-.info-value {
-  font-size: 16px;
+/* ========== FOOTER (Optional) ========== */
+footer {
+  background: rgba(0, 0, 0, 0.9);
   color: white;
-  font-weight: 500;
-}
-
-.info-value.price {
-  font-size: 20px;
-  font-weight: bold;
-  color: #4ade80;
-}
-
-.color-swatch {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-/* Action sections */
-.action-section {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  padding: 18px;
-  margin-bottom: 15px;
-  backdrop-filter: blur(10px);
-}
-
-.action-section h3 {
-  color: white !important;
-  margin-bottom: 12px !important;
-  font-size: 18px !important;
-}
-
-.action-section p {
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0 0 15px 0;
-  line-height: 1.5;
-}
-
-/* Color picker container */
-.color-picker-container {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.color-picker-container input[type="color"] {
-  width: 50px;
-  height: 50px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-/* Login section */
-.login-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
   text-align: center;
+  padding: 2rem;
+  margin-top: 4rem;
+  border-top: 2px solid #667eea;
+  font-size: 0.9rem;
 }
 
-.login-text {
-  font-size: 16px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  color: #ffeb3b !important;  /* Changed to bright yellow - matches the gradient better */
-  font-weight: 600;
-  width: 100%;
+footer a {
+  color: #667eea;
+  text-decoration: none;
+  transition: color 0.3s;
 }
 
-
-.modal-auth-buttons {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  width: 100%;
+footer a:hover {
+  color: #764ba2;
+  text-decoration: underline;
 }
 
-.modal-auth-buttons .btn {
-  padding: 10px 18px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  white-space: nowrap;
+/* ========== ANIMATIONS ========== */
+
+/**
+ * Fade in animation for elements
+ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-
-
-/* Max purchases warning */
-.max-purchases {
-  background: rgba(255, 152, 0, 0.2) !important;
-  border-left: 4px solid #ff9800;
+/**
+ * Pulse animation for loading states
+ */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
-.max-purchases p {
-  color: #ffeb3b !important;
-  margin: 0 !important;
+/**
+ * Bounce animation for buttons
+ */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
-/* Large button styling */
-.btn-large {
-  width: 100%;
-  padding: 14px !important;
-  font-size: 16px !important;
-  font-weight: 600 !important;
-  border-radius: 6px !important;
+/* Apply animations to specific elements */
+.btn:active {
+  animation: bounce 0.3s ease;
 }
 
-.changes-available {
-  color: rgba(255, 255, 255, 0.8) !important;
-  font-size: 14px !important;
-  font-style: italic !important;
-  margin: 0 !important;
+.loading-indicator {
+  animation: fadeIn 0.3s ease;
 }
+
+/* ========== PRINT MEDIA ========== */
+@media print {
+  body {
+    background: white;
+  }
+
+  .navbar,
+  .canvas-container,
+  .modal,
+  .btn {
+    display: none !important;
+  }
+
+  .container {
+    max-width: 100%;
+  }
+}
+
+/* ========== SCROLLBAR STYLING ========== */
+/* For Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #5568d3;
+}
+
+/* ========== END OF STYLESHEET ========== */
+
+/**
+ * SUMMARY OF CHANGES:
+ * 
+ * NEW SECTIONS ADDED:
+ * - History pages (buttons 1-10)
+ * - Ticket inventory display
+ * - Ticket shop modal (9 ticket types)
+ * - Color picker interface
+ * - Cost display styling
+ * - Insufficient funds warning
+ * - Max changes reached message
+ * - User inventory display
+ * 
+ * IMPROVEMENTS:
+ * - Better mobile responsiveness
+ * - Dark mode support
+ * - Accessibility features (high contrast, reduced motion)
+ * - Smooth animations and transitions
+ * - Better form styling
+ * - Scrollbar customization
+ * 
+ * RESPONSIVE BREAKPOINTS:
+ * - 1024px: Large tablets
+ * - 768px: Tablets
+ * - 480px: Mobile phones
+ * - 360px: Extra small phones
+ */
