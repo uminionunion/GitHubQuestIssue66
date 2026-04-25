@@ -222,7 +222,7 @@ function updateAuthUI() {
     logoutBtn.style.display = 'block';
     buyTicketsBtn.style.display = 'block';
     ticketInventory.style.display = 'flex';
-    userEmail.textContent = `👤 \${currentUser.email}`;
+    userEmail.textContent = `👤 ${currentUser.email}`;
     userEmail.style.display = 'inline';
   } else {
     // User is NOT logged in
@@ -254,7 +254,7 @@ async function login(email, password) {
   try {
     showLoading(true);
 
-    const response = await fetch(`\${API_BASE}/api/auth/login`, {
+    const response = await fetch(`${API_BASE}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
