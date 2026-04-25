@@ -725,7 +725,7 @@ function convertPixelTicketsToColored(totalPixelTickets) {
   for (const denom of denominations) {
     const count = Math.floor(remaining / denom.value);
     if (count > 0) {
-      parts.push(`${count} ${denom.name}${count > 1 ? 's' : ''}`);
+      parts.push(`${count} ${denom.name}${count > 1 ? 's' : ''} Ticket${count > 1 ? 's' : ''}`);
       remaining = remaining % denom.value;
     }
   }
@@ -1053,8 +1053,9 @@ async function showPixelModal(x, y) {
     } else {
       const costInTickets = calculatePixelCost(nextChangeNumber);
       const costInColored = convertPixelTicketsToColored(costInTickets);
+      const costInDollars = costInTickets * 2.00; // Each PixelTicket = $2
       document.getElementById('modalCostTickets').textContent = costInTickets;
-      document.getElementById('modalCostDisplay').textContent = `(${costInColored})`;
+      document.getElementById('modalCostDisplay').textContent = `(${costInColored}) = $${costInDollars.toFixed(2)}`;
     }
 
     // ---- COLOR PREVIEW ----
@@ -1158,36 +1159,65 @@ function populateUserInventoryModal() {
     return;
   }
 
-  const display = document.getElementById('modalUserInventory');
-  display.innerHTML = '';
+  const inventoryDisplay = document.getElementById('userInventoryDisplay');
+  inventoryDisplay.innerHTML = '';
 
-  let totalDisplayText = '';
-  let hasTickets = false;
+  // Create grid container
+  const grid = document.createElement('div');
+  grid.style.cssText = `
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+  `;
 
-  // Show each ticket type
-  for (const [ticketKey, ticketInfo] of Object.entries(TICKET_TYPES)) {
+  // All tickets in order
+  const ticketOrder = [
+    'blackTicket', 'purpleTicket', 'emeraldTicket',
+    'rubyTicket', 'sapphireTicket', 'silverTicket',
+    'goldTicket', 'diamondTicket', 'doublediamondTicket'
+  ];
+
+  ticketOrder.forEach(ticketKey => {
+    const ticketInfo = TICKET_TYPES[ticketKey];
     const count = userTicketInventory[ticketKey] || 0;
-    
-    if (count > 0) {
-      hasTickets = true;
-      const value = ticketInfo.pixelTicketsValue;
-      const totalValue = count * value;
-      totalDisplayText += `${count} ${ticketInfo.displayName}${count > 1 ? 's' : ''} (${totalValue}) + `;
-    }
-  }
 
-  // Remove trailing " + "
-  if (totalDisplayText.endsWith(' + ')) {
-    totalDisplayText = totalDisplayText.slice(0, -3);
-  }
+    const cell = document.createElement('div');
+    cell.style.cssText = `
+      background: rgba(255, 255, 255, 0.1);
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    `;
+    cell.innerHTML = `
+      <div style="font-size: 24px; margin-bottom: 5px;">${ticketInfo.emoji}</div>
+      <div style="color: white; font-size: 12px; margin-bottom: 3px;">${ticketInfo.displayName}</div>
+      <div style="color: #4ade80; font-weight: bold; font-size: 16px;">${count}</div>
+    `;
+    grid.appendChild(cell);
+  });
 
-  if (hasTickets) {
-    totalDisplayText += ` = ${userTicketInventory.total_pixeltickets} total PixelTickets`;
-    display.textContent = totalDisplayText;
-  } else {
-    display.textContent = 'You have no tickets. Buy some to change pixels!';
-  }
+  inventoryDisplay.appendChild(grid);
+
+  // Add total row
+  const totalRow = document.createElement('div');
+  totalRow.style.cssText = `
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 8px;
+    border: 2px solid rgba(102, 126, 234, 0.5);
+    text-align: center;
+    margin-top: 15px;
+  `;
+  totalRow.innerHTML = `
+    <div style="color: #ffd700; font-weight: bold; font-size: 18px;">
+      Total PixelTickets: <span style="color: #4ade80;">${userTicketInventory.total_pixeltickets || 0}</span>
+    </div>
+  `;
+  inventoryDisplay.appendChild(totalRow);
 }
+
 
 /**
  * Function: updateColorPreview(hexColor)
