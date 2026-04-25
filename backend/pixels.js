@@ -3,17 +3,20 @@
  * 
  * This file handles all pixel-related operations:
  * 1. Get pixel data
- * 2. Update pixel colors
- * 3. Create Stripe checkout sessions
- * 4. Manage pixel ownership
+ * 2. Change pixel colors (new, uses tickets)
+ * 3. Get pixel history for timeline pages
+ * 4. Manage pixel change tracking
  * 
- * Key concepts:
- * - Each pixel starts at $2 and doubles after each purchase
- * - Max 10 purchases per pixel
- * - Each purchase allows 1 color change
+ * ===== CHANGES IN THIS VERSION =====
+ * REMOVED: updatePixelColor() (old version that checked ownership)
+ * REMOVED: createCheckoutSession() (pixel purchases no longer exist)
+ * REMOVED: calculateNextPrice() (no longer needed)
+ * ADDED: changePixelColor() (new version that uses PixelTickets)
+ * ADDED: calculatePixelCost() (calculate ticket cost based on change number)
+ * ADDED: getPixelHistory() (get color change history for a pixel)
+ * ADDED: getHistoryPagePixels() (get all pixels at a specific page/change number)
  */
 
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { getQuery, allQuery, runQuery } = require('./db');
 
 // ==================== PIXEL RETRIEVAL ====================
@@ -40,9 +43,9 @@ const getAllPixels = async (start = 0, limit = 1000) => {
         x, 
         y, 
         color, 
-        current_price, 
-        purchase_count, 
-        owner_user_id 
+        change_count,
+        next_cost_tickets,
+        last_changed_by
       FROM pixels
       ORDER BY id ASC
       LIMIT ? OFFSET ?`,
@@ -55,10 +58,20 @@ const getAllPixels = async (start = 0, limit = 1000) => {
   }
 };
 
-
 /**
  * Function: getPixel(x, y)
  * Purpose: Get data for a specific pixel
+ * 
+ * Returns:
+ * {
+ *   id: 1234,
+ *   x: 5,
+ *   y: 10,
+ *   color: '#FF0000',
+ *   change_count: 3,          // How many times changed (0-10)
+ *   next_cost_tickets: 8,     // Cost in PixelTickets for next change
+ *   last_changed_by: 42       // user_id of last person who changed it
+ * }
  * 
  * Parameters:
  * - x: x coordinate (0-999)
@@ -88,227 +101,288 @@ const getPixel = async (x, y) => {
   }
 };
 
-// ==================== USER PIXEL MANAGEMENT ====================
+// ==================== PIXEL COLOR CHANGE (NEW SYSTEM) ====================
 
 /**
- * Function: getUserPixels(userId)
- * Purpose: Get all pixels owned by a specific user
+ * Function: changePixelColor(x, y, userId, newColor)
+ * Purpose: Change a pixel's color using PixelTickets
  * 
- * Used in user dashboard to show:
- * - All pixels they've purchased
- * - Current color of each
- * - How many color changes they have left
- * 
- * Returns: Array of pixel objects owned by user
- */
-const getUserPixels = async (userId) => {
-  try {
-    const pixels = await allQuery(
-      `SELECT 
-        id,
-        x,
-        y,
-        color,
-        current_price,
-        purchase_count,
-        color_changes_available
-      FROM pixels
-      WHERE owner_user_id = ?
-      ORDER BY y ASC, x ASC`,
-      [userId]
-    );
-
-    return pixels;
-  } catch (err) {
-    throw new Error('Failed to fetch user pixels: ' + err.message);
-  }
-};
-
-// ==================== COLOR MANAGEMENT ====================
-
-/**
- * Function: updatePixelColor(pixelId, userId, color)
- * Purpose: Change a pixel's color
- * 
- * Rules:
- * - User must own the pixel
- * - User must have color changes available
- * - Color must be valid hex format
+ * Process:
+ * 1. Verify pixel exists
+ * 2. Calculate cost based on how many times it's been changed
+ * 3. Check user has enough PixelTickets in their inventory
+ * 4. Deduct tickets from user's total
+ * 5. Record change in pixel_history
+ * 6. Update pixel's color and metadata
  * 
  * Parameters:
- * - pixelId: ID of pixel to update
- * - userId: ID of user attempting update
- * - color: Hex color string (e.g., "#FFFFFF")
+ * - x: pixel x coordinate
+ * - y: pixel y coordinate
+ * - userId: user_id making the change
+ * - newColor: hex color like "#FF0000"
  * 
  * Returns: Updated pixel object
+ * 
+ * Throws errors if:
+ * - Pixel not found
+ * - Invalid color format
+ * - Max changes reached (10)
+ * - User doesn't have enough PixelTickets
  */
-const updatePixelColor = async (pixelId, userId, color) => {
+const changePixelColor = async (x, y, userId, newColor) => {
   try {
     // ---- VALIDATION ----
     // Check color format (must be valid hex)
     const hexRegex = /^#[0-9A-F]{6}$/i;
-    if (!hexRegex.test(color)) {
+    if (!hexRegex.test(newColor)) {
       throw new Error('Invalid hex color format. Use #RRGGBB');
     }
 
-    // ---- VERIFY OWNERSHIP ----
-    // Get pixel data
+    // ---- GET PIXEL DATA ----
     const pixel = await getQuery(
-      'SELECT * FROM pixels WHERE id = ?',
-      [pixelId]
+      `SELECT * FROM pixels WHERE x = ? AND y = ?`,
+      [x, y]
     );
 
     if (!pixel) {
       throw new Error('Pixel not found');
     }
 
-    // Check if user owns this pixel
-    if (pixel.owner_user_id !== userId) {
-      throw new Error('You do not own this pixel');
+    // ---- CHECK IF MAX CHANGES REACHED ----
+    // Max 10 changes per pixel (change_count goes 0-9, then it's at max)
+    if (pixel.change_count >= 10) {
+      throw new Error('This pixel has reached maximum changes (10). Cannot change anymore.');
     }
 
-    // ---- CHECK COLOR CHANGES AVAILABLE ----
-    // User gets 1 color change per purchase
-    if (pixel.color_changes_available <= 0) {
-      throw new Error('No color changes available. Purchase again to get more.');
+    // ---- CALCULATE COST ----
+    // Next change number will be change_count + 1
+    const nextChangeNumber = pixel.change_count + 1;
+    const costInPixelTickets = calculatePixelCost(nextChangeNumber);
+
+    // ---- GET USER'S TICKET INVENTORY ----
+    const userTickets = await getQuery(
+      `SELECT * FROM user_tickets WHERE user_id = ?`,
+      [userId]
+    );
+
+    // If user has no tickets, set total to 0
+    const userTotalTickets = userTickets ? userTickets.total_pixeltickets : 0;
+
+    // ---- CHECK IF USER HAS ENOUGH TICKETS ----
+    if (userTotalTickets < costInPixelTickets) {
+      // Not enough tickets - return error with shortage info
+      const shortage = costInPixelTickets - userTotalTickets;
+      throw new Error(
+        `Insufficient PixelTickets. Need ${costInPixelTickets}, have ${userTotalTickets}, shortage: ${shortage}`
+      );
     }
 
-    // ---- UPDATE COLOR ----
-    // Set new color and decrement available changes
+    // ---- DEDUCT TICKETS FROM USER ----
+    const newTotal = userTotalTickets - costInPixelTickets;
+    await runQuery(
+      `UPDATE user_tickets 
+       SET total_pixeltickets = ?
+       WHERE user_id = ?`,
+      [newTotal, userId]
+    );
+
+    // ---- RECORD IN PIXEL_HISTORY ----
+    // This is how we track pixel evolution for pages 1-10
+    await runQuery(
+      `INSERT INTO pixel_history 
+       (pixel_x, pixel_y, change_number, color, changed_by_user_id, changed_at)
+       VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+      [x, y, nextChangeNumber, newColor, userId]
+    );
+
+    // ---- UPDATE PIXEL ----
+    // Set new color, increment change_count, update cost for next change
+    const nextCostTickets = calculatePixelCost(nextChangeNumber + 1);
+    
     await runQuery(
       `UPDATE pixels 
        SET color = ?, 
-           color_changes_available = color_changes_available - 1
-       WHERE id = ?`,
-      [color, pixelId]
+           change_count = ?,
+           next_cost_tickets = ?,
+           last_changed_by = ?,
+           last_changed_at = datetime('now')
+       WHERE x = ? AND y = ?`,
+      [newColor, nextChangeNumber, nextCostTickets, userId, x, y]
     );
 
     // ---- RETURN UPDATED PIXEL ----
     const updatedPixel = await getQuery(
-      'SELECT * FROM pixels WHERE id = ?',
-      [pixelId]
+      `SELECT * FROM pixels WHERE x = ? AND y = ?`,
+      [x, y]
     );
 
-    return updatedPixel;
+    return {
+      success: true,
+      pixel: updatedPixel,
+      newUserTotalTickets: newTotal,
+      costUsed: costInPixelTickets
+    };
   } catch (err) {
-    throw new Error('Failed to update pixel color: ' + err.message);
+    throw new Error('Failed to change pixel color: ' + err.message);
   }
 };
 
-// ==================== STRIPE CHECKOUT ====================
+// ==================== PIXEL COST CALCULATION (NEW) ====================
 
 /**
- * Function: createCheckoutSession(pixelId, userId, price, purchase_count, x, y)
- * Purpose: Create Stripe checkout session for pixel purchase
+ * Function: calculatePixelCost(changeNumber)
+ * Purpose: Calculate how many PixelTickets a change costs
  * 
- * This integrates with Stripe to:
- * 1. Create a checkout session
- * 2. Store pixel metadata
- * 3. Return session ID to frontend
- * 4. Frontend redirects to Stripe checkout
+ * Formula: 2^(changeNumber - 1)
+ * 
+ * Examples:
+ * changeNumber 1 (1st change): 2^0 = 1 PixelTicket
+ * changeNumber 2 (2nd change): 2^1 = 2 PixelTickets
+ * changeNumber 3 (3rd change): 2^2 = 4 PixelTickets
+ * changeNumber 4 (4th change): 2^3 = 8 PixelTickets
+ * changeNumber 5 (5th change): 2^4 = 16 PixelTickets
+ * ...
+ * changeNumber 10 (10th change): 2^9 = 512 PixelTickets
  * 
  * Parameters:
- * - pixelId: ID of pixel being purchased
- * - userId: ID of user making purchase
- * - price: Price in cents (e.g., 200 = $2.00)
- * - purchase_count: Current purchase count
- * - x, y: Pixel coordinates
+ * - changeNumber: Which change this is (1-10)
  * 
- * Returns: Stripe session object
+ * Returns: Cost in PixelTickets (integer)
+ * 
+ * Throws error if changeNumber > 10 (max changes exceeded)
  */
-const createCheckoutSession = async (pixelId, userId, price, purchase_count, x, y) => {
+const calculatePixelCost = (changeNumber) => {
+  // Validate change number
+  if (changeNumber < 1 || changeNumber > 10) {
+    throw new Error(`Invalid change number. Must be 1-10, got ${changeNumber}`);
+  }
+
+  // Calculate: 2^(changeNumber - 1)
+  const cost = Math.pow(2, changeNumber - 1);
+  
+  return cost;
+};
+
+// ==================== PIXEL HISTORY (NEW) ====================
+
+/**
+ * Function: getPixelHistory(x, y)
+ * Purpose: Get the complete change history for a single pixel
+ * 
+ * Returns all changes in order, like:
+ * [
+ *   {
+ *     change_number: 1,
+ *     color: '#FF0000',
+ *     changed_by_user_id: 123,
+ *     changed_at: '2024-01-01 10:00:00'
+ *   },
+ *   {
+ *     change_number: 2,
+ *     color: '#00FF00',
+ *     changed_by_user_id: 456,
+ *     changed_at: '2024-01-01 02:30:00'
+ *   },
+ *   ...
+ * ]
+ * 
+ * Parameters:
+ * - x: pixel x coordinate
+ * - y: pixel y coordinate
+ * 
+ * Returns: Array of history records (may be empty if never changed)
+ */
+const getPixelHistory = async (x, y) => {
   try {
-    // ---- VALIDATION ----
-    // Check purchase limit
-    if (purchase_count >= 10) {
-      throw new Error('This pixel has reached maximum purchases (10)');
-    }
+    const history = await allQuery(
+      `SELECT 
+        change_number,
+        color,
+        changed_by_user_id,
+        changed_at
+       FROM pixel_history
+       WHERE pixel_x = ? AND pixel_y = ?
+       ORDER BY change_number ASC`,
+      [x, y]
+    );
 
-    // Check price is reasonable (between $2 and $2048 = 2^10 * 2)
-    const maxPrice = 2 * Math.pow(2, 10) * 100; // in cents
-    if (price < 200 || price > maxPrice) {
-      throw new Error('Invalid price');
-    }
-
-    // ---- CREATE STRIPE SESSION ----
-    // This creates a checkout session that will handle payment
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      mode: 'payment',
-      
-      // The product being purchased
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: `Million Pixel Grid - Pixel (${x}, ${y})`,
-              description: `Purchase pixel at coordinates (${x}, ${y}). Purchase #${purchase_count + 1}`,
-              images: [] // Could add preview image here
-            },
-            unit_amount: price // Amount in cents
-          },
-          quantity: 1
-        }
-      ],
-
-      // Success/Cancel URLs
-      success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.FRONTEND_URL}/cancel`,
-
-      // IMPORTANT: Metadata is passed to webhook
-      // After payment, webhook will use this to update database
-      metadata: {
-        pixelId: pixelId.toString(),
-        userId: userId.toString(),
-        x: x.toString(),
-        y: y.toString(),
-        purchase_count: purchase_count.toString(),
-        price: price.toString()
-      }
-    });
-
-    return session;
+    return history || [];
   } catch (err) {
-    throw new Error('Failed to create checkout session: ' + err.message);
+    throw new Error('Failed to fetch pixel history: ' + err.message);
   }
 };
 
-// ==================== HELPER FUNCTIONS ====================
-
 /**
- * Function: calculateNextPrice(currentPurchaseCount)
- * Purpose: Calculate what price a pixel should be after this purchase
+ * Function: getHistoryPagePixels(pageNumber)
+ * Purpose: Get ALL pixels showing their state at a specific change number
  * 
- * Price progression:
- * - Purchase 1: $2
- * - Purchase 2: $4
- * - Purchase 3: $8
- * - Purchase 4: $16
- * - ... up to purchase 10: $1024
+ * This is used for the history pages (1-10) feature.
+ * When user clicks "Page 5", we show all pixels with their color
+ * from change #5 (or their latest change if < 5)
  * 
- * Formula: 2 * (2 ^ purchaseCount)
+ * Algorithm:
+ * 1. For each pixel, check if it has a change at this page number
+ * 2. If YES: return the color from that change
+ * 3. If NO: return the latest change color before this page
+ * 4. If NEVER: return white (default)
  * 
- * Parameters: currentPurchaseCount (0-9)
- * Returns: Price in cents
+ * Parameters:
+ * - pageNumber: Which change number to show (1-10)
+ * 
+ * Returns: Array of all pixels with their color at that change number
+ * 
+ * Example:
+ * getHistoryPagePixels(3) returns all pixels showing their state
+ * from change #3 (or latest if only changed 1-2 times)
  */
-const calculateNextPrice = (currentPurchaseCount) => {
-  // Check if already at max
-  if (currentPurchaseCount >= 10) {
-    return null; // Can't purchase anymore
-  }
+const getHistoryPagePixels = async (pageNumber) => {
+  try {
+    // Validate page number
+    if (pageNumber < 1 || pageNumber > 10) {
+      throw new Error('Invalid page number. Must be 1-10');
+    }
 
-  // Calculate: $2 * 2^purchaseCount, convert to cents
-  const priceInDollars = 2 * Math.pow(2, currentPurchaseCount);
-  return Math.round(priceInDollars * 100); // Convert to cents
+    // SQL Query explanation:
+    // For each pixel, find the color from change #pageNumber
+    // If no change at that number, find the most recent change BEFORE that number
+    // If no changes at all, use white
+    const pixels = await allQuery(
+      `SELECT 
+        p.id,
+        p.x,
+        p.y,
+        COALESCE(
+          -- First, try to find change at exactly this page number
+          (SELECT color FROM pixel_history 
+           WHERE pixel_x = p.x AND pixel_y = p.y AND change_number = ?
+           LIMIT 1),
+          -- If not found, get most recent change before this page number
+          (SELECT color FROM pixel_history 
+           WHERE pixel_x = p.x AND pixel_y = p.y AND change_number < ?
+           ORDER BY change_number DESC
+           LIMIT 1),
+          -- If still no change, use white (default)
+          '#FFFFFF'
+        ) as color,
+        p.change_count,
+        p.last_changed_by
+       FROM pixels p
+       ORDER BY p.id ASC`,
+      [pageNumber, pageNumber]
+    );
+
+    return pixels;
+  } catch (err) {
+    throw new Error('Failed to fetch history page pixels: ' + err.message);
+  }
 };
 
 // ==================== EXPORTS ====================
 module.exports = {
   getAllPixels,
   getPixel,
-  getUserPixels,
-  updatePixelColor,
-  createCheckoutSession,
-  calculateNextPrice
+  changePixelColor,
+  calculatePixelCost,
+  getPixelHistory,
+  getHistoryPagePixels
 };

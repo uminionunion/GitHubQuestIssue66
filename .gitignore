@@ -1,6 +1,9 @@
-# Environment variables
+# Environment variables (NEVER COMMIT)
 .env
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .env.*.local
 
 # Docker
@@ -47,6 +50,7 @@ yarn-error.log
 *.db
 *.sqlite
 *.sqlite3
+
 
 # Logs
 logs/
