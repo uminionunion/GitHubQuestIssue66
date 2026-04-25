@@ -465,7 +465,7 @@ async function loadPixelsProgressively() {
         // Log progress
         const percentComplete = Math.round((batchesCompleted / totalBatches) * 100);
         if (batchesCompleted % 5 === 0) {
-          console.log(`⏳ Loading... \${percentComplete}%`);
+          console.log(`⏳ Loading... ${percentComplete}%`);
         }
 
         return batch;
