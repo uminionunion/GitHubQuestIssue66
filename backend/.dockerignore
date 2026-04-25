@@ -7,3 +7,4 @@ __pycache__
 .env.local
 venv/
 .pytest_cache
+webhook_data.json
