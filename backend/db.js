@@ -403,6 +403,77 @@ const allQuery = (sql, params = []) => {
   });
 };
 
+
+
+app.post('/api/woocommerce/webhook',
+  express.raw({ type: 'application/json' }),
+  (req, res) => {
+    req.rawBody = req.body.toString();
+    req.body = JSON.parse(req.rawBody);
+    woocommerceWebhook(req, res);
+  }
+);
+
+
+
+
+
+
+
+// ==================== USER HELPER FUNCTIONS ====================
+
+/**
+ * Function: getUserByEmail(email)
+ * Purpose: Find user by email address
+ * 
+ * Returns: Promise with user object { id, email, password_hash, created_at }
+ */
+const getUserByEmail = (email) => {
+  return getQuery('SELECT * FROM users WHERE email = ?', [email]);
+};
+
+/**
+ * Function: addTicketsToUser(userId, totalPixelTickets)
+ * Purpose: Add pixel tickets to user's inventory
+ * 
+ * This function:
+ * 1. Gets user's current ticket inventory
+ * 2. Adds the new tickets to total_pixeltickets
+ * 3. Updates the user_tickets table
+ * 
+ * Example: addTicketsToUser(5, 250) adds 250 pixel tickets to user 5
+ * 
+ * Returns: Promise that resolves when complete
+ */
+const addTicketsToUser = async (userId, totalPixelTickets) => {
+  // Get user's current ticket row
+  const userTickets = await getQuery(
+    'SELECT * FROM user_tickets WHERE user_id = ?',
+    [userId]
+  );
+
+  if (!userTickets) {
+    // User has no ticket row yet, create one
+    await runQuery(
+      'INSERT INTO user_tickets (user_id, total_pixeltickets) VALUES (?, ?)',
+      [userId, totalPixelTickets]
+    );
+  } else {
+    // User has tickets, add to existing total
+    const newTotal = (userTickets.total_pixeltickets || 0) + totalPixelTickets;
+    await runQuery(
+      'UPDATE user_tickets SET total_pixeltickets = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?',
+      [newTotal, userId]
+    );
+  }
+
+  console.log(`✅ Added ${totalPixelTickets} tickets to user ${userId}`);
+};
+
+
+
+
+
 // ==================== EXPORTS ====================
 // Make functions available to other modules
 module.exports = {
@@ -410,5 +481,7 @@ module.exports = {
   initializeDatabase,
   runQuery,
   getQuery,
-  allQuery
+  allQuery,
+  getUserByEmail,
+  addTicketsToUser
 };

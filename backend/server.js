@@ -35,6 +35,9 @@ const tickets = require('./tickets');
 const stripeWebhook = require('./stripe-webhook');
 const { authenticateToken } = require('./middleware');
 
+const woocommerceWebhook = require('./woocommerce-webhook');
+
+
 // ==================== INITIALIZATION ====================
 // Create Express app instance
 const app = express();
@@ -62,6 +65,13 @@ db.initializeDatabase().catch(err => {
   console.error('❌ Database initialization failed:', err);
   process.exit(1);
 });
+
+
+// WooCommerce Related:
+
+app.post('/api/woocommerce/webhook', woocommerceWebhook);
+
+
 
 // ==================== API ROUTES ====================
 
@@ -393,6 +403,14 @@ app.get('/api/user/inventory', authenticateToken, (req, res) => {
       });
     });
 });
+
+
+
+
+
+
+
+// I think the stuff below is now officially outdated as of 4:15pm on 4/25/26 as long as code works moving forward; feel free deleting it/preparingItForDeletion -Salem 4:15pm on -4/25/26
 
 // ---- STRIPE WEBHOOK ROUTE ----
 // This endpoint receives notifications from Stripe after payments
