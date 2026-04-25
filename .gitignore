@@ -51,4 +51,7 @@ yarn-error.log
 logs/
 *.log
 
-webhook_data.json
+
+#This is for webhook security; keep these like this
+backend/.env
+backend/woocommerce-webhook.js
