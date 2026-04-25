@@ -626,10 +626,10 @@ async function loadUserTicketInventory() {
     }
 
     const response = await fetch(
-      `\${API_BASE}/api/user/inventory`,
+      `${API_BASE}/api/user/inventory`,
       {
         headers: {
-          'Authorization': `Bearer \${currentUser.token}`
+          'Authorization': `Bearer ${currentUser.token}`
         }
       }
     );
@@ -641,7 +641,7 @@ async function loadUserTicketInventory() {
     }
 
     userTicketInventory = data.data;
-    console.log(`✅ Loaded ticket inventory: \${userTicketInventory.total_pixeltickets} total`);
+    console.log(`✅ Loaded ticket inventory: ${userTicketInventory.total_pixeltickets} total`);
 
     // Update navbar display
     updateTicketInventoryDisplay();
@@ -676,7 +676,7 @@ function updateTicketInventoryDisplay() {
     if (count > 0) {
       const span = document.createElement('span');
       span.className = 'inventory-item';
-      span.textContent = `\${ticketInfo.emoji} \${count}`;
+      span.textContent = `${ticketInfo.emoji} ${count}`;
       display.appendChild(span);
     }
   }
@@ -684,7 +684,7 @@ function updateTicketInventoryDisplay() {
   // Show total at the end
   const totalSpan = document.createElement('span');
   totalSpan.className = 'inventory-total';
-  totalSpan.textContent = `= \${userTicketInventory.total_pixeltickets} total`;
+  totalSpan.textContent = `= ${userTicketInventory.total_pixeltickets} total`;
   display.appendChild(totalSpan);
 }
 
@@ -725,7 +725,7 @@ function convertPixelTicketsToColored(totalPixelTickets) {
   for (const denom of denominations) {
     const count = Math.floor(remaining / denom.value);
     if (count > 0) {
-      parts.push(`\${count} ${denom.name}${count > 1 ? 's' : ''}`);
+      parts.push(`${count} ${denom.name}${count > 1 ? 's' : ''}`);
       remaining = remaining % denom.value;
     }
   }
