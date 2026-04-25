@@ -46,11 +46,6 @@ yarn-error.log
 *~
 .DS_Store
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
 
 # Logs
 logs/
