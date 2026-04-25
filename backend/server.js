@@ -73,6 +73,21 @@ app.post('/api/woocommerce/webhook', woocommerceWebhook);
 
 
 
+
+app.post('/api/woocommerce/webhook',
+  express.raw({ type: 'application/json' }),
+  (req, res) => {
+    req.rawBody = req.body.toString();
+    req.body = JSON.parse(req.rawBody);
+    woocommerceWebhook(req, res);
+  }
+);
+
+
+
+
+
+
 // ==================== API ROUTES ====================
 
 // ---- AUTHENTICATION ROUTES ----
