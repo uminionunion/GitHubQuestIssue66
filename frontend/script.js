@@ -321,7 +321,7 @@ async function register(email, password, passwordConfirm) {
 
     showLoading(true);
 
-    const response = await fetch(`\${API_BASE}/api/auth/register`, {
+    const response = await fetch(`${API_BASE}/api/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
