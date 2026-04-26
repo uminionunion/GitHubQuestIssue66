@@ -1,27 +1,6 @@
 version: '3.8'
 
 services:
-  # NEW: Shared MySQL Database
-  mysql:
-    image: mysql:8.0
-    container_name: uminion-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: uminion_root_secure_password_123
-      MYSQL_DATABASE: uminion_shared
-      MYSQL_USER: uminion_user
-      MYSQL_PASSWORD: uminion_user_password_456
-    volumes:
-      - mysql_data:/var/lib/mysql
-    ports:
-      - "3306:3306"
-    restart: unless-stopped
-    networks:
-      - pixel-network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 20s
-      retries: 10
-
   backend:
     build:
       context: .
@@ -33,30 +12,36 @@ services:
       - "5000:5000"
     
     environment:
+      # ===== SERVER CONFIG =====
       - NODE_ENV=development
       - PORT=5000
-      # REMOVED: DB_PATH (SQLite)
-      # ADDED: MySQL connection vars
-      - DB_HOST=mysql
-      - DB_USER=uminion_user
-      - DB_PASSWORD=uminion_user_password_456
-      - DB_NAME=uminion_shared
-      - JWT_SECRET=your_super_secret_jwt_key_change_this_in_production_12345
-      - JWT_EXPIRY=7d
-      - STRIPE_SECRET_KEY=sk_test_YOUR_KEY_HERE
-      - STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY_HERE
-      - STRIPE_WEBHOOK_SECRET=whsec_YOUR_WEBHOOK_SECRET_HERE
-      - WOOCOMMERCE_WEBHOOK_SECRET=your_woocommerce_secret_key_here
-      - FRONTEND_URL=http://72.61.7.100:5001
-      - BACKEND_URL=http://backend:5000
+      
+      # ===== REMOTE MYSQL CONFIG =====
+      # These connect to page001's remote MySQL server
+      # The .env file on VPS provides the actual credentials
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      
+      # ===== JWT CONFIG =====
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRY=${JWT_EXPIRY}
+      
+      # ===== STRIPE CONFIG =====
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      
+      # ===== WOOCOMMERCE CONFIG =====
+      # Secret from page001's WooCommerce webhook settings
+      - WOOCOMMERCE_WEBHOOK_SECRET=${WOOCOMMERCE_WEBHOOK_SECRET}
+      
+      # ===== URL CONFIG =====
+      - FRONTEND_URL=${FRONTEND_URL}
+      - BACKEND_URL=${BACKEND_URL}
     
     restart: unless-stopped
-    
-    depends_on:
-      mysql:
-        condition: service_healthy
-    
-    # REMOVED: pixel-database volume (no longer using SQLite)
     
     networks:
       - pixel-network
@@ -78,12 +63,6 @@ services:
     
     networks:
       - pixel-network
-
-volumes:
-  # REMOVED: pixel-database (SQLite)
-  # ADDED: mysql_data (MySQL)
-  mysql_data:
-    driver: local
 
 networks:
   pixel-network:
