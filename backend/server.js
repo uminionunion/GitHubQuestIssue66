@@ -60,7 +60,8 @@ app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 app.use(express.static('../frontend'));
 
 // ==================== DATABASE INITIALIZATION ====================
-// Initialize NySQL? database 
+// Initialize connection pool to remote MySQL database (the schema for uminion_shared)
+// This connects to the remote MySQL server where both page001 and page005 share data
 db.initializePool();
 
 
