@@ -60,19 +60,11 @@ app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 app.use(express.static('../frontend'));
 
 // ==================== DATABASE INITIALIZATION ====================
-// Initialize SQLite database (creates tables if they don't exist)
-db.initializeDatabase().catch(err => {
-  console.error('❌ Database initialization failed:', err);
-  process.exit(1);
-});
+// Initialize NySQL? database 
+db.initializePool();
 
 
 // WooCommerce Related:
-
-app.post('/api/woocommerce/webhook', woocommerceWebhook);
-
-
-
 
 app.post('/api/woocommerce/webhook',
   express.raw({ type: 'application/json' }),
