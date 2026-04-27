@@ -16,10 +16,10 @@ services:
       - NODE_ENV=development
       - PORT=5000
       
-      # ===== REMOTE MYSQL CONFIG =====
-      # These connect to page001's remote MySQL server
-      # The .env file on VPS provides the actual credentials
-      - DB_HOST=${DB_HOST}
+      # ===== LOCAL DOCKER MYSQL CONFIG =====
+      # These connect to container_uminionmysql (page009's MySQL container)
+      # Instead of remote VPS MySQL, we use the local Docker MySQL
+      - DB_HOST=container_uminionmysql
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
@@ -45,6 +45,7 @@ services:
     
     networks:
       - pixel-network
+      - uminionnet  # ← ADD THIS to connect to page009's MySQL
 
   frontend:
     build:
@@ -67,3 +68,6 @@ services:
 networks:
   pixel-network:
     driver: bridge
+  
+  uminionnet:  # ← ADD THIS
+    external: true  # ← This means it already exists (created by page009)
