@@ -70,7 +70,15 @@ const initializeDatabase = async () => {
   const connection = await pool.getConnection();
   
   try {
+    // ---- CREATE SCHEMA IF NOT EXISTS ----
+    // Create uminion_shared schema inside the page001 database
+    await connection.execute(`
+      CREATE SCHEMA IF NOT EXISTS uminion_shared
+    `);
+    console.log('✅ uminion_shared schema ready');
+
     // ---- TABLE 1: USERS ----
+
     // Stores page005 user account information (NOT page001's users)
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS users (
